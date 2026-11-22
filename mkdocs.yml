@@ -1,0 +1,26 @@
+site_name: Gjallar
+site_description: Security without chains. Kubernetes vulnerability, license and posture risk, explained.
+repo_url: https://github.com/heimdallr-dev/gjallar
+edit_uri: https://github.com/heimdallr-dev/gjallar-docs/edit/main/docs/
+theme:
+  name: material
+  features: [navigation.sections, content.code.copy, search.highlight]
+  palette:
+    - { scheme: default, toggle: { icon: material/brightness-7, name: Dark mode } }
+    - { scheme: slate, toggle: { icon: material/brightness-4, name: Light mode } }
+markdown_extensions: [admonition, tables, toc: { permalink: true }, pymdownx.superfences: { custom_fences: [{ name: mermaid, class: mermaid, format: !!python/name:pymdownx.superfences.fence_code_format }] }]
+nav:
+  - Home: index.md
+  - Philosophy: philosophy.md
+  - Install: install-wsl.md
+  - Architecture: architecture.md
+  - Configuration: configuration.md
+  - Operations: operations.md
+  - Interfaces: interfaces.md
+  - Analytics: analytics.md
+  - Development: development.md
+  - OpenSSF alignment: openssf.md
+  - Status:
+      - Roadmap: roadmap.md
+      - Verification 2026-11 (round 1): verification-2026-11.md
+      - Verification 2026-11-22 (round 2): verification-2026-11-22.md
