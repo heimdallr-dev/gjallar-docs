@@ -211,8 +211,10 @@ Valkey/Redis is not needed: NATS KV covers caching and runtime state.
   pinned to 0.69.3 and verified by checksum, because 0.69.4–0.69.6 were
   malicious (CVE-2026-33634). kubectl-gadget is verified against the
   release's `SHA256SUMS`.
-- **Bus:** NATS requires a token (generated Secret); without it a pod in the
-  cluster could publish fake inventory or jobs.
+- **Bus:** NATS requires credentials (generated Secret). Services share user
+  `gjallar`; agents use user `agent`, allowed only to report inventory and
+  runtime data and to read SBOMs, so a leaked agent password (possibly from
+  another cluster) cannot queue jobs, forge results or delete streams.
 - **Audit:** every human decision (accept, patch, scan, rematch) is recorded
   with who and which client, in logs and the `audit_events` table.
 - **Build:** every engine binary is downloaded at a pinned version and checked

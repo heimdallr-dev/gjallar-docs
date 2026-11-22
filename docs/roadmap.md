@@ -70,8 +70,9 @@ Ordered by what most improves safety and freedom per hour of work.
 
 1. ~~Read-only SQL by construction~~ (done 2026-11-22: sessions are locked
    to the lake path and the export folder; see architecture.md).
-2. **NATS TLS and per-service credentials** (NKeys/JWT), so a leaked token
-   is not a key to the whole bus.
+2. ~~Per-role NATS credentials~~ (done in 0.3.0: agents get their own user
+   with an allow-list, tested against a real server). Still to do: TLS on the
+   bundled NATS (clients already support `tls://` and mutual TLS).
 3. ~~Notification retries~~ (done: a failed send unmarks the alert and the
    bus redelivers with backoff).
 4. ~~VEX as signed attestations~~ (done in 0.2.0).
@@ -83,6 +84,7 @@ Ordered by what most improves safety and freedom per hour of work.
    Grype DB; export to GUAC / Dependency-Track (CycloneDX).
 6. **Runtime, part 2.** `trace_exec` next to `trace_open`.
 7. **Verification on a bigger host** (≥ 16 GB): browser flows, MCP via a real
-   AI client, Copa push, DuckLake on Ceph, multi-cluster leaf nodes, arm64.
+   AI client, Copa push, multi-cluster leaf nodes (DuckLake on Ceph, arm64 and
+   Dependency-Track done in round 4).
 8. **OpenSSF Best Practices badge** (bestpractices.dev): most criteria are now
    met (SECURITY.md, CVD, CI, signed releases, tests); file the self-assessment.

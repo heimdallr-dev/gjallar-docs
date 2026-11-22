@@ -87,10 +87,39 @@ Interoperability problems found and handled in the adapters:
 | WSL restarted three times under the full stack | likely memory (11 GB for kind + Kyverno + KEDA + Keycloak + IG + Gjallar); give WSL more memory/swap in `.wslconfig` |
 | kind (nerdctl provider) can't delete a never-started node | `kind-dev.sh` removes the container first |
 
+## Round 4: live checks without a cluster (2026-11-22, 0.3.0)
+
+After WSL restarted under the full kind stack, every check in this round ran
+as a few small containers with memory limits instead of a cluster.
+
+| What | How | Result |
+|---|---|---|
+| **Dependency-Track** live | DT 4.13.2 (`-Xmx4g`, container capped at 3 GB), Automation team key, `go test ./internal/adapters/dtrack -run Live` with Syft's nginx:1.27 CycloneDX | first upload **rejected (37 schema errors)**; after the fix below: accepted, project auto-created, components listed |
+| **Agent NATS user** | nats 2.11.6 with the chart's rendered `nats.conf`, `go test ./internal/adapters/natsbus -run AgentUser` | agent may publish inventory and runtime events, read/write the runtime KV and read SBOMs; **denied**: publishing jobs or results, writing SBOMs, deleting or purging streams; wrong password refused |
+| **DuckLake on Ceph RGW** | analytics 0.2.0 + Postgres catalog + NATS, one `gjallar.results.scored` event | event queryable through the SQL API; Parquet files on `s3://gjallar-lake/verify-20261122/` after a flush (see below) |
+| DuckLake schema evolution and flush | `go test ./internal/adapters/analytics` with DuckDB 2.0.1 | an "old" lake gains new columns on start; `Maintain` writes inlined rows to Parquet |
+| **arm64 images** | QEMU user emulation (`tonistiigi/binfmt`), `--platform linux/arm64` | api and worker binaries start (0.2.0); Syft 1.57.2, Grype 0.122.1, Trivy 0.69.3, OSV-Scanner, cosign 2.4.1 run as aarch64; Syft scans alpine:3.22 |
+| Public images and signatures | anonymous GHCR pulls; `cosign verify` / `verify-attestation --type cyclonedx` (keyless, public Rekor) | all 11 packages pull without login; api 0.2.0 signature and SBOM attestation verify |
+
+Defects found and fixed:
+
+| Problem | Effect | Fix |
+|---|---|---|
+| Dependency-Track 4.13 validates license IDs against its bundled SPDX list; Syft uses a newer one (`SMAIL-GPL`) | **the whole SBOM was rejected**, so nothing reached DT | the exporter retries once with only the IDs DT named moved to `license.name` (text kept) |
+| DuckLake stores small batches *inline* in the catalog database | history stayed in Postgres, not in open Parquet on S3 (0 data files) | daily `Maintain` now calls `ducklake_flush_inlined_data` |
+| `finding_events` had no `source` column | the lake could not tell Grype, OSV and Trivy findings apart | column added; existing lakes gain it on start (`ALTER TABLE … ADD COLUMN IF NOT EXISTS`) |
+| One NATS token for every component | a leaked token from any agent (possibly in another cluster) could queue jobs, forge results or delete streams | separate users: services `gjallar`, agents `agent` with an allow-list (`nats.auth: users`, default) |
+| `kind load` imports `--all-platforms` | multi-arch images pulled from GHCR failed to load into kind | `kind-dev.sh` imports only the host platform |
+| Keycloak reports Ready before its admin API answers | e2e realm setup failed now and then | the setup retries the admin token |
+
 ## Still open
 
-- Browser PKCE and device-flow pages after the CSP fix (Playwright script ready:
-  `gjallar-e2e: browser/run-in-kind.sh`), MCP from the `claude` CLI, Copa push to a
-  registry, DuckLake writes on Ceph, multi-cluster leaf node, arm64 images.
-  All need the full kind stack, which this machine could not keep running;
-  repeat on a host with ≥ 16 GB or after fixing WSL memory limits.
+- **Copa push to Harbor**: Trivy found 72 fixable packages in alpine:3.20.0,
+  but WSL restarted while BuildKit ran; needs a host with more memory.
+- **Browser PKCE and device-flow pages** (Playwright script ready:
+  `gjallar-e2e: browser/run-in-kind.sh`) and **multi-cluster**: both need a
+  running cluster; on this 12 GB WSL use `LIGHT=1` in `kind/setup-all.sh`,
+  or a bigger host.
+- **NATS TLS in the chart**: clients support `tls://` with `GJALLAR_NATS_CA`
+  (and mutual TLS); the bundled single-node NATS still listens in plain text
+  inside the cluster. Use the official NATS chart with TLS for remote agents.

@@ -66,6 +66,18 @@ cluster: { name: dc-manila-01 }
 
 Spokes then need no inbound firewall rules.
 
+Give spokes the **agent** credentials only, never the services' token:
+
+```sh
+kubectl -n gjallar get secret gjallar-nats -o jsonpath='{.data.agent-password}' | base64 -d > agent.pw   # on the hub
+kubectl -n gjallar create secret generic gjallar-nats --from-file=agent-password=agent.pw                 # on the spoke
+```
+
+The `agent` user may only report inventory and runtime data and read SBOMs,
+so a leaked spoke credential cannot queue jobs, forge results or delete
+streams. Upgrading from 0.2.x: update the hub first (it creates the
+`agent-password` key), or keep `nats.auth: token` until every spoke runs 0.3.0.
+
 ## Backups and restore
 
 - **Postgres** holds the operational state. Enable `cronjobs.backup`, or use

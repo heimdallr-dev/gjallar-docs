@@ -8,7 +8,11 @@ Every service reads environment variables. The Helm chart sets them from
 | Variable | Default | Meaning |
 |---|---|---|
 | `GJALLAR_NATS_URL` | `nats://localhost:4222` | NATS server (or local leaf node) |
-| `GJALLAR_NATS_TOKEN` | — | NATS auth token (the chart generates Secret `<release>-nats` and requires it) |
+| `GJALLAR_NATS_USER` | — | NATS user (chart: `gjallar` for services, `agent` for agents) |
+| `GJALLAR_NATS_PASSWORD` | — | password for `GJALLAR_NATS_USER` (falls back to `GJALLAR_NATS_TOKEN`) |
+| `GJALLAR_NATS_TOKEN` | — | NATS token, or the services' password when a user is set (the chart generates Secret `<release>-nats`) |
+| `GJALLAR_NATS_CA` | — | CA file for a `tls://` NATS URL |
+| `GJALLAR_NATS_CERT`, `GJALLAR_NATS_KEY` | — | client certificate for mutual TLS |
 | `GJALLAR_HTTP_ADDR` | per service | Listen address |
 | `GJALLAR_LOG_LEVEL` | `info` | `debug`, `info`, `warn`, `error` (JSON logs to stderr) |
 | `OTEL_EXPORTER_OTLP_ENDPOINT` | — | OTLP/HTTP base URL; traces go to `/v1/traces` (Collector or Tempo) |
@@ -145,7 +149,9 @@ so new settings render empty.
 | `notify.existingSecret` | `""` | Secret with key `GJALLAR_NOTIFY` (webhook URLs are credentials) |
 | `discovery.harbor.*` | off | Harbor URL, projects, robot Secret (`username`, `password`) |
 | `discovery.registry.*` | off | Any OCI registry: `url`, `repositories`, `maxTags`, `existingSecret` |
-| `nats.tokenSecret` | generated | Secret with key `token`; spokes and external NATS reuse the hub's |
+| `nats.auth` | `users` | `users`: services and agents get separate NATS users, agents can only report; `token`: one shared token (older releases, external NATS) |
+| `nats.tokenSecret` | generated | Secret with keys `token` (services) and `agent-password` (agents); spokes copy only `agent-password` |
+| `nats.caSecret` | — | Secret with `ca.crt`, mounted into the agent for a `tls://` hub |
 | `workers.patch.trivyDBRepository` | `""` | Internal Trivy DB mirror (air-gapped) |
 | `workers.patch.targetRepository`, `.timeout` | `""`, `20m` | Where Copa pushes; Copa timeout |
 | `workers.vuln.matcher`, `workers.vuln.osv` | `grype`, `false` | Primary matcher; offline OSV second source |
