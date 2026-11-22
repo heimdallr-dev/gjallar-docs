@@ -143,7 +143,7 @@ scripts/kind-dev.sh up            # creates cluster "gjallar", loads the images,
 ```
 
 The script runs kind with the nerdctl provider, checks the node's DNS, loads
-the ten images with `kind load image-archive` and runs `helm install`. After
+the images for this machine's platform and runs `helm install`. After
 rebuilding images run `scripts/kind-dev.sh load`. After a WSL restart run
 `up` again (see Operations → Local dev environment). It pulls NATS, Postgres
 and the Grype DB mirror from the internet; the first install takes ~5 minutes.

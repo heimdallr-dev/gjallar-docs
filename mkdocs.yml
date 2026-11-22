@@ -12,7 +12,9 @@ markdown_extensions: [admonition, tables, toc: { permalink: true }, pymdownx.sup
 nav:
   - Home: index.md
   - Philosophy: philosophy.md
-  - Install: install-wsl.md
+  - Install:
+      - Kubernetes: install.md
+      - WSL and kind: install-wsl.md
   - Architecture: architecture.md
   - Configuration: configuration.md
   - Operations: operations.md
@@ -23,4 +25,4 @@ nav:
   - Status:
       - Roadmap: roadmap.md
       - Verification 2026-11 (round 1): verification-2026-11.md
-      - Verification 2026-11-22 (round 2): verification-2026-11-22.md
+      - Verification 2026-11-22 (rounds 2-5): verification-2026-11-22.md

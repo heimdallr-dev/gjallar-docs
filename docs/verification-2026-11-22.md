@@ -112,10 +112,34 @@ Defects found and fixed:
 | `kind load` imports `--all-platforms` | multi-arch images pulled from GHCR failed to load into kind | `kind-dev.sh` imports only the host platform |
 | Keycloak reports Ready before its admin API answers | e2e realm setup failed now and then | the setup retries the admin token |
 
+## Round 5: real cluster deployment (2026-11-23, 0.3.1)
+
+Installed with only the published chart (`helm install oci://ghcr.io/heimdallr-dev/charts/gjallar --version 0.3.1`)
+on a 5-node Kubernetes 1.36 cluster (containerd 2.3, Ceph RBD volumes), small
+profile, sign-in through the cluster's existing Keycloak 26.8.
+
+| What | Result |
+|---|---|
+| Install | 11 pods Running on 3 nodes; NATS, Postgres and analytics volumes Bound on `ceph-rbd-infra-k8s` (new chart value `storageClass`) |
+| Inventory | 86 workloads in 23 namespaces, 82 images |
+| SBOM + match | 79 of 82 images within minutes; the other 3 are private images (needs `workers.registryAuthSecret`) |
+| Noise reduction | **7,314 open findings → 11 urgent (all CISA KEV), 22 high**, 1,021 medium, 6,260 low |
+| Sign-in | realm imported with `keycloak/import-realm.sh`; API 401 without a token, with a forged token and through the web proxy; web config and CSP point at the realm; Keycloak accepts the UI's PKCE (S256) authorize request for `http://localhost:8083/` and refuses other redirect URIs |
+| Web UI move | UI and server now built in gjallar-web (standard library only, own tests); core no longer contains it |
+
+Found and fixed: `make deploy` passed git's `v0.3.0` as the image tag (images
+are `0.3.0`); clusters without a default StorageClass needed three settings
+(now one).
+
 ## Still open
 
 - **Copa push to Harbor**: Trivy found 72 fixable packages in alpine:3.20.0,
   but WSL restarted while BuildKit ran; needs a host with more memory.
+- **gjallar-web 0.3.1 image**: the repo's workflow may not push to the
+  `gjallar-web` package yet (GHCR: package settings → Manage Actions access →
+  add `gjallar-web`); until then the chart runs `web.tag=0.3.0`, the same UI.
+- **First browser sign-in** on the real cluster: left to the operator, since
+  it replaces the temporary password.
 - **Browser PKCE and device-flow pages** (Playwright script ready:
   `gjallar-e2e: browser/run-in-kind.sh`) and **multi-cluster**: both need a
   running cluster; on this 12 GB WSL use `LIGHT=1` in `kind/setup-all.sh`,
