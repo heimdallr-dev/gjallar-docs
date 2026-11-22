@@ -10,7 +10,7 @@ cmd/
   gjallar-agent/        per-cluster inventory
   gjallar-analytics/    lakehouse writer + query API, `maintain`
   gjallar-mcp/          MCP server
-  gjallar-web/          UI server (static/ is embedded)
+                        (the web UI and its server live in github.com/heimdallr-dev/gjallar-web)
 internal/
   domain/               pure model: assets, findings, risk, policy, events   ← no imports outside stdlib
   app/                  use cases + ports (interfaces)                       ← imports domain only
